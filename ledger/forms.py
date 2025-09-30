@@ -11,7 +11,9 @@ class CashflowRecordForm(forms.ModelForm):
         model = CashflowRecord
         fields = ["record_date", "status", "type", "category", "subcategory", "amount", "comment"]
         widgets = {
-            "record_date": forms.DateInput(attrs={
+            "record_date": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
                 "type": "date",
                 "class": "form-control",
                 "min": "1950-01-01",
@@ -26,6 +28,7 @@ class CashflowRecordForm(forms.ModelForm):
         for n in ["status", "type", "category", "subcategory"]:
             self.fields[n].widget.attrs.update({"class": "form-select"})
 
+        self.fields["record_date"].input_formats = ["%Y-%m-%d"]
         self.fields["category"].queryset = Category.objects.none()
         self.fields["subcategory"].queryset = Subcategory.objects.none()
 
