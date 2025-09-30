@@ -8,13 +8,11 @@ class TypeAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     ordering = ("name",)
 
-
 @admin.register(Status)
 class StatusAdmin(admin.ModelAdmin):
     list_display = ("name",)
     search_fields = ("name",)
     ordering = ("name",)
-
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -22,7 +20,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ("type",)
     search_fields = ("name",)
     ordering = ("type__name", "name")
-
 
 @admin.register(Subcategory)
 class SubcategoryAdmin(admin.ModelAdmin):

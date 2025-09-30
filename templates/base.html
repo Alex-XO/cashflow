@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>ДДС</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .table .truncate {
+      max-width: 16rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      vertical-align: bottom;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">Дайте Денег. Спасибо.</a>
+    <div class="ms-auto">
+      <a class="btn btn-success" href="/records/new/">Новая запись</a>
+      <a class="btn btn-outline-light ms-2" href="/catalog/">Справочники</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  {% if messages %}
+    <div class="mt-2">
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags|default:'warning' }} mb-2">{{ m }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+
+<script>
+function getCookie(name) {
+  const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return m ? m.pop() : '';
+}
+
+async function postJSON(url, body) {
+  const r = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { throw new Error(await r.text()); }
+  return r.json();
+}
+
+async function loadOptions(sel, url, selectedId) {
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">Загрузка…</option>';
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    const items = Array.isArray(data) ? data : (data.results || []);
+    sel.innerHTML = '<option value="">---------</option>';
+    for (const x of items) {
+      const o = document.createElement('option');
+      o.value = x.id;
+      o.textContent = x.name;
+      if (selectedId && String(selectedId) === String(x.id)) { o.selected = true; }
+      sel.appendChild(o);
+    }
+  } catch (e) {
+    sel.innerHTML = '<option value="">Ошибка загрузки</option>';
+    console.error(e);
+  } finally {
+    sel.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

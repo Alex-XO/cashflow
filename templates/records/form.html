@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>{% if object %}Редактирование{% else %}Новая{% endif %} запись</h3>
+<form method="post" class="row g-3">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger">{{ form.non_field_errors|join:", " }}</div>
+{% endif %}
+  <div class="col-md-3">
+    <label class="form-label">{{ form.record_date.label }}</label>
+    {{ form.record_date }}
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">{{ form.status.label }}</label>
+    {{ form.status }}
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">{{ form.type.label }}</label>
+    <div class="input-group">
+      {{ form.type }}
+      <button class="btn btn-outline-secondary" type="button" id="btnAddType">+</button>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">{{ form.amount.label }}</label>
+    {{ form.amount }}
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">{{ form.category.label }}</label>
+    <div class="input-group">
+      {{ form.category }}
+      <button class="btn btn-outline-secondary" type="button" id="btnAddCat">+</button>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">{{ form.subcategory.label }}</label>
+    <div class="input-group">
+      {{ form.subcategory }}
+      <button class="btn btn-outline-secondary" type="button" id="btnAddSub">+</button>
+    </div>
+  </div>
+  <div class="col-12">
+    <label class="form-label">{{ form.comment.label }}</label>
+    {{ form.comment }}
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">Сохранить</button>
+    <a class="btn btn-secondary" href="{% url 'record_list' %}">Отмена</a>
+  </div>
+</form>
+
+<script>
+async function loadJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) { throw new Error(await r.text()); }
+  return r.json();
+}
+
+function restrictTo(select, id) {
+  const v = String(id);
+  const opts = Array.from(select.options);
+  const keep = opts.find(o => o.value === v);
+  if (keep) {
+    select.innerHTML = "";
+    select.appendChild(keep);
+    keep.selected = true;
+  } else {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    select.innerHTML = "";
+    select.appendChild(o);
+    o.selected = true;
+  }
+}
+
+(async function () {
+  const tSel = document.getElementById('id_type');
+  const cSel = document.getElementById('id_category');
+  const sSel = document.getElementById('id_subcategory');
+
+  async function fillCats() {
+    const t = tSel.value;
+    if (t) { await loadOptions(cSel, `/api/categories/?type=${encodeURIComponent(t)}`); }
+    else { cSel.innerHTML = '<option value="">---------</option>'; }
+    sSel.innerHTML = '<option value="">---------</option>';
+  }
+
+  async function fillSubs() {
+    const c = cSel.value;
+    if (c) { await loadOptions(sSel, `/api/subcategories/?category=${encodeURIComponent(c)}`); }
+    else { sSel.innerHTML = '<option value="">---------</option>'; }
+  }
+
+  async function backfillTypeFromCategory() {
+    const c = cSel.value;
+    if (!c) return;
+    const cat = await loadJSON(`/api/categories/${encodeURIComponent(c)}/`);
+    if (cat.type) {
+      tSel.value = String(cat.type);
+      await fillCats();
+      cSel.value = String(c);
+      restrictTo(tSel, cat.type);
+      await fillSubs();
+    }
+  }
+
+  async function backfillCatAndTypeFromSub() {
+    const s = sSel.value;
+    if (!s) return;
+    const sub = await loadJSON(`/api/subcategories/${encodeURIComponent(s)}/`);
+    if (sub.category) {
+      const c = String(sub.category);
+      const cat = await loadJSON(`/api/categories/${encodeURIComponent(c)}/`);
+      if (cat.type) {
+        tSel.value = String(cat.type);
+        restrictTo(tSel, cat.type);
+      }
+      cSel.value = c;
+      restrictTo(cSel, c);
+      await fillSubs();
+      sSel.value = String(s);
+    }
+  }
+
+  tSel.addEventListener('change', fillCats);
+  cSel.addEventListener('change', async () => { await backfillTypeFromCategory(); await fillSubs(); });
+  sSel.addEventListener('change', backfillCatAndTypeFromSub);
+
+  await fillCats();
+  await fillSubs();
+})();
+
+(function quickAdd() {
+  const tSel = document.getElementById('id_type');
+  const cSel = document.getElementById('id_category');
+  const sSel = document.getElementById('id_subcategory');
+
+  document.getElementById('btnAddType').addEventListener('click', async () => {
+    const name = prompt('Название типа:');
+    if (!name) return;
+    const obj = await postJSON('/api/types/', { name });
+    await loadOptions(tSel, '/api/types/');
+    tSel.value = String(obj.id);
+    tSel.dispatchEvent(new Event('change'));
+  });
+
+  document.getElementById('btnAddCat').addEventListener('click', async () => {
+    const name = prompt('Название категории:');
+    if (!name) return;
+    const typeId = tSel.value;
+    if (!typeId) { alert('Сначала выберите тип.'); return; }
+    const obj = await postJSON('/api/categories/', { name, type: Number(typeId) });
+    await loadOptions(cSel, `/api/categories/?type=${typeId}`);
+    cSel.value = String(obj.id);
+    cSel.dispatchEvent(new Event('change'));
+  });
+
+  document.getElementById('btnAddSub').addEventListener('click', async () => {
+    const name = prompt('Название подкатегории:');
+    if (!name) return;
+    const catId = cSel.value;
+    if (!catId) { alert('Сначала выберите категорию.'); return; }
+    const obj = await postJSON('/api/subcategories/', { name, category: Number(catId) });
+    await loadOptions(sSel, `/api/subcategories/?category=${catId}`);
+    sSel.value = String(obj.id);
+  });
+})();
+</script>
+{% endblock %}

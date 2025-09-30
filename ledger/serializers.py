@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import CashflowRecord
 
+
 class CashflowRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = CashflowRecord
@@ -17,17 +18,15 @@ class CashflowRecordSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    def validate(self, attrs):
-        instance = getattr(self, "instance", None)
-        category = attrs.get("category", getattr(instance, "category", None))
-        type_ = attrs.get("type", getattr(instance, "type", None))
-        subcategory = attrs.get("subcategory", getattr(instance, "subcategory", None))
+    def validate(self, data):
+        inst = getattr(self, "instance", None)
+        category = data.get("category", getattr(inst, "category", None))
+        type_ = data.get("type", getattr(inst, "type", None))
+        sub = data.get("subcategory", getattr(inst, "subcategory", None))
 
-        if category is not None and type_ is not None:
-            if category.type_id != type_.id:
-                raise serializers.ValidationError({"category": "Категория не относится к выбранному типу."})
-        if subcategory is not None and category is not None:
-            if subcategory.category_id != category.id:
-                raise serializers.ValidationError({"subcategory": "Подкатегория не принадлежит выбранной категории."})
+        if category and type_ and category.type_id != type_.id:
+            raise serializers.ValidationError({"category": "Категория не относится к выбранному типу."})
+        if sub and category and sub.category_id != category.id:
+            raise serializers.ValidationError({"subcategory": "Подкатегория не принадлежит выбранной категории."})
 
-        return attrs
+        return data

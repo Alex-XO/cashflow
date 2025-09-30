@@ -2,14 +2,15 @@
   { "model": "catalog.type", "pk": 1, "fields": { "name": "Пополнение" } },
   { "model": "catalog.type", "pk": 2, "fields": { "name": "Списание" } },
 
-  { "model": "catalog.status", "pk": 1, "fields": { "name": "Работа" } },
+  { "model": "catalog.status", "pk": 1, "fields": { "name": "Бизнес" } },
   { "model": "catalog.status", "pk": 2, "fields": { "name": "Личное" } },
+  { "model": "catalog.status", "pk": 3, "fields": { "name": "Налог" } },
 
-  { "model": "catalog.category", "pk": 1, "fields": { "name": "Реклама", "type": 2 } },
-  { "model": "catalog.category", "pk": 2, "fields": { "name": "Продукты", "type": 2 } },
+  { "model": "catalog.category", "pk": 1, "fields": { "name": "Маркетинг", "type": 2 } },
+  { "model": "catalog.category", "pk": 2, "fields": { "name": "Инфраструктура", "type": 2 } },
 
-  { "model": "catalog.subcategory", "pk": 1, "fields": { "name": "Каталог", "category": 1 } },
-  { "model": "catalog.subcategory", "pk": 2, "fields": { "name": "Ведение соц.сетей", "category": 1 } },
-  { "model": "catalog.subcategory", "pk": 3, "fields": { "name": "Продукт1", "category": 2 } },
-  { "model": "catalog.subcategory", "pk": 4, "fields": { "name": "Продукт2", "category": 2 } }
+  { "model": "catalog.subcategory", "pk": 1, "fields": { "name": "Avito", "category": 1 } },
+  { "model": "catalog.subcategory", "pk": 2, "fields": { "name": "Farpost", "category": 1 } },
+  { "model": "catalog.subcategory", "pk": 3, "fields": { "name": "VPS", "category": 2 } },
+  { "model": "catalog.subcategory", "pk": 4, "fields": { "name": "Proxy", "category": 2 } }
 ]

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Справочники</h3>
+<div class="list-group">
+  <a class="list-group-item list-group-item-action" href="{% url 'types_list' %}">Типы</a>
+  <a class="list-group-item list-group-item-action" href="{% url 'statuses_list' %}">Статусы</a>
+  <a class="list-group-item list-group-item-action" href="{% url 'categories_list' %}">Категории</a>
+  <a class="list-group-item list-group-item-action" href="{% url 'subcategories_list' %}">Подкатегории</a>
+</div>
+{% endblock %}

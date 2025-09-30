@@ -1,6 +1,13 @@
 .venv/
+venv/
 __pycache__/
+*.py[cod]
+*.log
+*.pot
 *.pyc
 db.sqlite3
+*.sqlite3
+.idea/
+*.iml
 .env
 staticfiles/

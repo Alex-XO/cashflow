@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Записи ДДС</h3>
+
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-2">
+    <label class="form-label">С даты</label>
+    <input type="date" name="record_date_after" class="form-control" value="{{ request.GET.record_date_after }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">По дату</label>
+    <input type="date" name="record_date_before" class="form-control" value="{{ request.GET.record_date_before }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Статус</label>
+    <select name="status" class="form-select">
+      <option value="">---------</option>
+      {% for s in statuses %}
+        <option value="{{ s.id }}" {% if selected.status == s.id %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Тип</label>
+    <select name="type" id="flt_type" class="form-select" onchange="onTypeChange()">
+      <option value="">---------</option>
+      {% for t in types %}
+        <option value="{{ t.id }}" {% if selected.type == t.id %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Категория</label>
+    <select name="category" id="flt_category" class="form-select"></select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Подкатегория</label>
+    <select name="subcategory" id="flt_subcategory" class="form-select"></select>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">Фильтровать</button>
+    <a class="btn btn-secondary" href="/">Сброс</a>
+  </div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-striped align-middle">
+  <thead>
+    <tr>
+      <th>Дата</th>
+      <th>Статус</th>
+      <th>Тип</th>
+      <th>Категория</th>
+      <th>Подкатегория</th>
+      <th class="text-end">Сумма</th>
+      <th>Комментарий</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in records %}
+    <tr>
+      <td>{{ r.record_date }}</td>
+      <td>{{ r.status.name }}</td>
+      <td>{{ r.type.name }}</td>
+      <td>{{ r.category.name }}</td>
+      <td>{{ r.subcategory.name }}</td>
+      <td class="text-end">{{ r.amount }}</td>
+      <td><span class="truncate">{{ r.comment|default:"" }}</span></td>
+      <td class="text-nowrap">
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'record_edit' r.id %}">Изм.</a>
+        <a class="btn btn-sm btn-outline-danger" href="{% url 'record_delete' r.id %}">Удал.</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="text-center">Записей нет</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if is_paginated %}
+<nav>
+  <ul class="pagination">
+    {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">Назад</a></li>
+    {% endif %}
+    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+    {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Вперёд</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<script>
+async function initFilters() {
+  const tSel = document.getElementById('flt_type');
+  const cSel = document.getElementById('flt_category');
+  const sSel = document.getElementById('flt_subcategory');
+
+  const tVal = tSel.value;
+  const catSelected = "{{ selected.category|default_if_none:'' }}";
+  const subSelected = "{{ selected.subcategory|default_if_none:'' }}";
+
+  if (tVal) {
+    await loadOptions(cSel, `/api/categories/?type=${encodeURIComponent(tVal)}`, catSelected);
+    if (catSelected) {
+      await loadOptions(sSel, `/api/subcategories/?category=${encodeURIComponent(catSelected)}`, subSelected);
+    } else {
+      sSel.innerHTML = '<option value="">---------</option>';
+    }
+  } else {
+    cSel.innerHTML = '<option value="">---------</option>';
+    sSel.innerHTML = '<option value="">---------</option>';
+  }
+}
+
+async function onTypeChange() {
+  const tSel = document.getElementById('flt_type');
+  const cSel = document.getElementById('flt_category');
+  const sSel = document.getElementById('flt_subcategory');
+  const tVal = tSel.value;
+
+  if (tVal) {
+    await loadOptions(cSel, `/api/categories/?type=${encodeURIComponent(tVal)}`);
+  } else {
+    cSel.innerHTML = '<option value="">---------</option>';
+  }
+  sSel.innerHTML = '<option value="">---------</option>';
+}
+
+async function onCategoryChange() {
+  const cSel = document.getElementById('flt_category');
+  const sSel = document.getElementById('flt_subcategory');
+  const cVal = cSel.value;
+  if (cVal) {
+    await loadOptions(sSel, `/api/subcategories/?category=${encodeURIComponent(cVal)}`);
+  } else {
+    sSel.innerHTML = '<option value="">---------</option>';
+  }
+}
+
+(function bindFilterHandlers(){
+  const cSel = document.getElementById('flt_category');
+  cSel.addEventListener('change', onCategoryChange);
+})();
+initFilters();
+</script>
+{% endblock %}
